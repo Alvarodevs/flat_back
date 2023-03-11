@@ -1,56 +1,75 @@
 const Product = require("../models/model");
 
-const add = (req, res, next) => {
+const add = async (req, res, next) => {
   if (!req.body) {
     req.status(400).send({
       message: "Should not be empty",
     });
     return;
   }
-  const body = req.body;
-  const product = new Product(req.body);
-  product
-    .save(product)
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message:
-          err.message || "Error while adding item",
-      });
+
+  const { name, description, image, isFavourite, price, section } = req.body;
+  const product = new Product({
+    name,
+    description,
+    image,
+    isFavourite,
+    price,
+    section,
+  });
+  
+  try {
+    const newProduct = await product.save()
+    return res.status(201).json({
+      data: true,
+      message: 'Added new product',
+      newProduct,
     });
-};
-
-const find = (req, res, next) => {
-  if (req.query.id) {
-    const id = req.query.id;
-
-    Product.findById(id)
-      .then((data) => {
-        if (!data) {
-          res.status(404).send({ message: "Not found product with id " + id });
-        } else {
-          res.send(data);
-        }
-      })
-      .catch((err) => {
-        res
-          .status(500)
-          .send({ message: "Error retrieving product with id " + id });
-      });
-  } else {
-    Product.find()
-      .then((product) => {
-        res.status(200).send(product);
-      })
-      .catch((err) => {
-        res.status(500).send({
-          message:
-            err.message || "Error Occurred while retriving product information",
-        });
-      });
+  } catch(error) {
+    return res.status(500).send({
+      data: true,
+      message: `Error while adding item: ${error.message}`,
+    });
   }
 };
 
-module.exports = { add, find }
+const getAllProducts = async (req, res) => {
+  try {
+    const products = await Product.find();
+
+    return res.status(201).json({
+      data: true,
+      products,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      data: false,
+      msg: `Please contact the administrator ${error.message}`,
+    });
+  }
+};
+
+const findByQuery = async (req, res, next) => {
+  const { query } = req.query
+  if (query) {
+    const nameRegex = new RegExp(query, 'i');
+
+    try {
+      const result = await Product.find({
+        name: nameRegex,
+      });
+  
+      return res.status(201).json({
+        data: true,
+        result,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        data: false,
+        message: `Error ocurred: ${error.message}`,
+      });
+    }
+  };
+}
+
+module.exports = { add, getAllProducts, findByQuery }
