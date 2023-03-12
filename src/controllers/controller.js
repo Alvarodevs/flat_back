@@ -7,8 +7,9 @@ const add = async (req, res, next) => {
     });
     return;
   }
-
-  const { name, description, image, isFavourite, price, section } = req.body;
+  console.log('FILE', req.file)
+  console.log('BODY', req.body)
+  const { name, description, image, isFavourite, price, section, imageFile } = req.body;
   const product = new Product({
     name,
     description,
@@ -16,6 +17,7 @@ const add = async (req, res, next) => {
     isFavourite,
     price,
     section,
+    imageFile
   });
   
   try {
